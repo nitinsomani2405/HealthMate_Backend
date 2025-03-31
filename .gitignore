@@ -1,33 +1,74 @@
-HELP.md
-target/
-!.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+# Ignore Maven and Gradle build directories
+/target/
+/out/
+/build/
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-
-### IntelliJ IDEA ###
-.idea
-*.iws
+# Ignore IDE-specific files
+.idea/
 *.iml
 *.ipr
+*.iws
+/.vscode/
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
+# Ignore OS-generated files
+.DS_Store
+Thumbs.db
+
+# Ignore logs and temporary files
+*.log
+/logs/
+/tmp/
+/hs_err_pid*
+
+# Ignore environment and configuration files
+.env
+*.properties
+*.yml
+*.yaml
+!src/main/resources/application*.yml
+!src/main/resources/application*.yaml
+!src/main/resources/application*.properties
+
+# Ignore database files
+*.db
+*.sqlite
+/data/
+
+# Ignore dependencies
+.mvn/
+.gradle/
+/node_modules/
+
+# Ignore compiled Java files
+*.class
+*.jar
+*.war
+*.ear
+
+# Ignore test and coverage reports
+/test-output/
+/coverage/
+/jacoco/
+
+# Ignore Docker and Kubernetes files
+docker-compose.override.yml
+/.docker/
+/.kube/
+
+# Ignore generated metadata
+/.metadata/
+/bin/
+/gen/
 /dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
-### VS Code ###
-.vscode/
+# Ignore sensitive files
+keystore.jks
+*.pem
+*.crt
+*.key
+*.p12
+
+# Ignore IntelliJ and Eclipse project files
+.classpath
+.project
+.settings/
