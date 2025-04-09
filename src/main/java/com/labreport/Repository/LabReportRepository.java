@@ -11,5 +11,6 @@ import java.util.UUID;
 public interface LabReportRepository extends JpaRepository<LabReport, UUID> {
     List<LabReport> findByPatient_PatientId(UUID patientId);
 
+    List<LabReport> findByDoctor_DoctorId(UUID doctorId);
 }
 

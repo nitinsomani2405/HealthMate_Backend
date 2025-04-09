@@ -4,9 +4,7 @@ package com.labreport.Service;
 import com.auth.Models.user;
 import com.auth.Repository.SessionRepository;
 import com.auth.Repository.UserRepository;
-import com.labreport.Dtos.LabReportListResponseDTO;
-import com.labreport.Dtos.LabReportResponseDTO;
-import com.labreport.Dtos.LabReportUploadResponseDTO;
+import com.labreport.Dtos.*;
 import com.labreport.Models.LabReport;
 import com.labreport.Repository.LabReportRepository;
 import com.profile.Models.Doctor;
@@ -15,7 +13,6 @@ import com.profile.Repository.DoctorRepository;
 import com.profile.Repository.PatientRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,7 +21,6 @@ import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -65,7 +61,7 @@ public class LabReportService {
         return new LabReportUploadResponseDTO("Lab report uploaded successfully", fileUrl);
     }
 
-    public LabReportListResponseDTO getAllLabReportsForPatient(String accessToken) throws AccessDeniedException {
+    public GetAllLabReportsByPatientResponseDTO getAllLabReportsForPatient(String accessToken) throws AccessDeniedException {
         UUID userId = sessionRepository.findUserIdByAccessToken(accessToken);
         if (userId == null) {
             throw new IllegalArgumentException("Invalid access token");
@@ -79,12 +75,12 @@ public class LabReportService {
         }
         List<LabReport> labReports = labReportRepository.findByPatient_PatientId(userId);
 
-        List<LabReportResponseDTO> dtos = labReports.stream().map(report -> {
+        List<LabReportPatientResponseDTO> dtos = labReports.stream().map(report -> {
             UUID doctorId = report.getDoctor().getDoctorId();
             Doctor doctor = doctorRepository.findById(doctorId)
                     .orElseThrow(() -> new NoSuchElementException("Doctor not found"));
 
-            return new LabReportResponseDTO(
+            return new LabReportPatientResponseDTO(
                     report.getReportId(),
                     doctor.getUser().getFullName(),
                     report.getFileUrl(),
@@ -92,8 +88,76 @@ public class LabReportService {
             );
         }).toList();
 
-        return new LabReportListResponseDTO(dtos);
+        return new GetAllLabReportsByPatientResponseDTO(dtos);
     }
+
+    public GetAllLabReportsByDoctorResponseDTO getAllLabReportsForDoctor(String accessToken) throws AccessDeniedException {
+        // Step 1: Get userId from session repository using access token
+        UUID userId = sessionRepository.findUserIdByAccessToken(accessToken);
+        if (userId == null) {
+            throw new IllegalArgumentException("Invalid access token");
+        }
+
+        // Step 2: Fetch user and check if doctor
+        user user = userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("User not found"));
+
+        if (!user.getRole().equalsIgnoreCase("DOCTOR")) {
+            throw new AccessDeniedException("Only doctors can access this data.");
+        }
+
+
+
+        // Step 3: Fetch all lab reports uploaded by this doctor
+        List<LabReport> labReports = labReportRepository.findByDoctor_DoctorId(userId);
+
+        // Step 4: Convert to response DTOs
+        List<LabReportDoctorResponseDTO> dtos = labReports.stream().map(report -> {
+            UUID patientId = report.getPatient().getPatientId();
+            Patient patient = report.getPatient();
+
+            return new LabReportDoctorResponseDTO(
+                    report.getReportId(),
+                    patient.getUser().getFullName(),
+                    report.getFileUrl(),
+                    report.getUploaded_at()
+            );
+        }).toList();
+
+        return new GetAllLabReportsByDoctorResponseDTO(dtos);
+    }
+
+
+    public void deleteLabReport(UUID reportId, String accessToken) throws AccessDeniedException {
+        UUID userId = sessionRepository.findUserIdByAccessToken(accessToken);
+        if (userId == null) {
+            throw new IllegalArgumentException("Invalid access token");
+        }
+
+        user user = userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("User not found"));
+
+        if (!user.getRole().equalsIgnoreCase("DOCTOR")) {
+            throw new AccessDeniedException("Only doctors can delete lab reports.");
+        }
+
+
+
+        LabReport report = labReportRepository.findById(reportId)
+                .orElseThrow(() -> new NoSuchElementException("Lab report not found"));
+
+        if (!report.getDoctor().getDoctorId().equals(userId)) {
+            throw new AccessDeniedException("You are not authorized to delete this report.");
+        }
+
+        // Delete the file from Supabase
+        supabaseService.deleteFile(report.getFileUrl());
+
+
+        // Delete the lab report record from database
+        labReportRepository.delete(report);
+    }
+
 
 
 }

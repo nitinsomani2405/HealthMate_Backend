@@ -7,6 +7,6 @@ import java.util.List;
 //list of all reports for patient
 @Data
 @AllArgsConstructor
-public class LabReportListResponseDTO {
-    private List<LabReportResponseDTO> lab_reports;
+public class GetAllLabReportsByPatientResponseDTO {
+    private List<LabReportPatientResponseDTO> lab_reports;
 }

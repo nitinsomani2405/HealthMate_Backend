@@ -1,20 +1,20 @@
 package com.labreport.Dtos;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-//one lab report dto for patient
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class LabReportResponseDTO {
-    private UUID reportId;
-    private String doctorName;
-    private String fileUrl;
-    private LocalDateTime uploadedAt;
+public class LabReportDoctorResponseDTO {
+    private UUID report_id;
+    private String patient_name;
+    private String file_url;
+    private LocalDateTime uploaded_at;
 }
-
