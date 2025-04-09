@@ -25,9 +25,9 @@ Thumbs.db
 *.properties
 *.yml
 *.yaml
+!src/main/resources/application*.properties
 !src/main/resources/application*.yml
 !src/main/resources/application*.yaml
-!src/main/resources/application*.properties
 
 # Ignore database files
 *.db
@@ -72,3 +72,4 @@ keystore.jks
 .classpath
 .project
 .settings/
+src/main/resources/application.properties
