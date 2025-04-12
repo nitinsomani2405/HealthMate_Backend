@@ -36,7 +36,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/login", "/api/signup","/api/refresh-token","/api/status").permitAll()
+                        .requestMatchers("/api/login", "/api/signup","/api/refresh-token","/api/status","/","/api/get-profile/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class)  // Add TokenFilter first

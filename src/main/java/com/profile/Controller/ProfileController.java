@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
@@ -13,9 +15,9 @@ public class ProfileController {
 
     private final ProfileService profileService;
 
-    @GetMapping("/get-profile")
-    public ResponseEntity<?> getProfile(@RequestHeader("Authorization") String accessToken) {
-        return ResponseEntity.ok(profileService.getProfile(accessToken));
+    @GetMapping("/get-profile/{userId}")
+    public ResponseEntity<?> getProfile(@PathVariable UUID userId) {
+        return ResponseEntity.ok(profileService.getProfile(userId));
     }
 
     @PostMapping("/post-profile")

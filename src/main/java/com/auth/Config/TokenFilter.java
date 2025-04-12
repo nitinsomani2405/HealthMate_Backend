@@ -28,14 +28,21 @@ public class TokenFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+
         String path = request.getRequestURI();
-        if (path.equals("/api/login") || path.equals("/api/signup")||path.equals("/api/status")) {
+        // Extract the access token from the request
+        String accessToken = extractAccessTokenFromRequest(request);
+        if(accessToken == null) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        if (path.equals("/api/login") || path.equals("/api/signup")||path.equals("/api/status")||path.equals("/")) {
             filterChain.doFilter(request, response); // skip token validation
             return;
         }
 
-        // Extract the access token from the request
-        String accessToken = extractAccessTokenFromRequest(request);
+
         // Validate the token and userId
         UUID userId = tokenService.getUserIdFromAccessToken(accessToken);
         if (accessToken != null && tokenService.validateAccessToken(accessToken)) {

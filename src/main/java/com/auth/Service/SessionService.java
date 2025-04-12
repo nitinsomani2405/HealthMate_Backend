@@ -29,7 +29,7 @@ public class SessionService {
     }
     
     @Transactional
-    public void createSession(UUID userId, String accessToken, String refreshToken) {
+    public Session createSession(UUID userId, String accessToken, String refreshToken) {
         Instant now = Instant.now();
 
         // ✅ Fetch user from DB to ensure it's managed by Hibernate
@@ -52,6 +52,7 @@ public class SessionService {
             e.printStackTrace(); // Log full error
             throw new RuntimeException("Error while saving session: " + e.getMessage());
         }
+        return session;
     }
 
     public String refreshAccessToken(String refreshToken) {

@@ -1,5 +1,7 @@
 package com.auth.Controller;
 
+import com.auth.Models.Session;
+import com.auth.Repository.SessionRepository;
 import com.auth.Repository.UserRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -24,6 +26,8 @@ import com.auth.Service.SessionService;
 import com.auth.Service.TokenService;
 
 import jakarta.validation.Valid;
+
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -37,12 +41,14 @@ public class AuthController {
     private final TokenService tokenService;
     private final SessionService sessionService;
     private final UserRepository userRepository;
+    private final SessionRepository sessionRepository;
 
-    public AuthController(AuthService authService, TokenService tokenService, SessionService sessionService, UserRepository userRepository) {
+    public AuthController(AuthService authService, TokenService tokenService, SessionService sessionService, UserRepository userRepository, SessionRepository sessionRepository) {
         this.authService = authService;
         this.tokenService = tokenService;
         this.sessionService = sessionService;
         this.userRepository = userRepository;
+        this.sessionRepository = sessionRepository;
     }
 
     @PostMapping("/signup")
@@ -115,13 +121,13 @@ public class AuthController {
             String refreshToken = tokenService.generateRefreshToken(authenticatedUser.getId());
             
 
-            sessionService.createSession(authenticatedUser.getId(), accessToken, refreshToken);
+            Session session =sessionService.createSession(authenticatedUser.getId(), accessToken, refreshToken);
     	    // Retrieve session details (assuming session is created after successful authentication)
 
  
             DataDTO dataDTO = new DataDTO(
                     new UserDTO(authenticatedUser.getId(), authenticatedUser.getEmail(), authenticatedUser.getCreatedAt()),
-                    new SessionDTO(accessToken, refreshToken)
+                    new SessionDTO(accessToken, refreshToken,session.getAccessTokenExpiry().toString(), session.getRefreshTokenExpiry().toString())
             );
 
             return ResponseEntity.ok(new LoginResponseDTO(dataDTO, authenticatedUser.getRole()));
@@ -133,18 +139,22 @@ public class AuthController {
     @PostMapping("/refresh-token")
     public ResponseEntity<?> refreshToken(@Valid @RequestBody RefreshTokenRequestDTO refreshTokenRequest) {
         try {
+            String refreshtoken= refreshTokenRequest.getRefreshToken();
+            Session s= sessionRepository.findByRefreshToken(refreshtoken);
+            if(s==null){
+                ResponseEntity.badRequest().body(new ErrorResponseDTO("Refresh Token", "Invalid refresh token"));
+            }
+            String oldaccesstokenexpiry=s.getAccessTokenExpiry().toString();
+            String oldrefreshtokenexpiry=s.getRefreshTokenExpiry().toString();
             String newAccessToken = sessionService.refreshAccessToken(refreshTokenRequest.getRefreshToken());
 
-            return ResponseEntity.ok(new RefreshTokenResponseDTO(new SessionDataDTO(new SessionDTO(newAccessToken, refreshTokenRequest.getRefreshToken()))));
+            return ResponseEntity.ok(new RefreshTokenResponseDTO(new SessionDataDTO(new SessionDTO(newAccessToken, refreshTokenRequest.getRefreshToken(),oldaccesstokenexpiry,oldrefreshtokenexpiry))));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new ErrorResponseDTO("Refresh Token Error", e.getMessage()));
         }
     }
 
-    @GetMapping("/status")
-    public ResponseEntity<?> status() {
-        return ResponseEntity.ok(Map.of("message","server is running"));
-    }
+
 
     @GetMapping("/user-role")
     public ResponseEntity<?> userRole(@RequestHeader("Authorization") String accessToken) {

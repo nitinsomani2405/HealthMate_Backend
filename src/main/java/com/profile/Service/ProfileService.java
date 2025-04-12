@@ -29,14 +29,10 @@ public class ProfileService {
     private final PatientRepository patientRepository;
     private final SessionRepository sessionRepository;
 
-    public Object getProfile(String accessToken) {
-        UUID userId = sessionRepository.findUserIdByAccessToken(accessToken.substring(7));
-
-        // Fetch common user info
+    public Object getProfile(UUID userId) {
         user userData = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        // Return separate response objects based on user role
         if ("doctor".equalsIgnoreCase(userData.getRole())) {
             Doctor doctor = doctorRepository.findById(userId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Doctor profile not found"));
@@ -73,6 +69,7 @@ public class ProfileService {
     }
 
 
+
     public ResponseEntity<?> completeProfile(String token, PostProfileRequest request) {
         UUID userId = sessionRepository.findUserIdByAccessToken(token.substring(7));
 
@@ -86,10 +83,18 @@ public class ProfileService {
                 Doctor doctor = doctorRepository.findById(userId)
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Doctor profile not found"));
 
-                doctor.setDateOfBirth(request.getDateOfBirth());
-                doctor.setSpeciality(request.getSpeciality());
-                doctor.setClinicName(request.getClinicName());
-                doctor.setProfileCompleted(true);
+                if(request.getDateOfBirth() != null) {
+                    doctor.setDateOfBirth(request.getDateOfBirth());
+                }
+                if(request.getSpeciality()!= null) {
+                    doctor.setSpeciality(request.getSpeciality());
+                }
+                if(request.getClinicName()!= null) {
+                    doctor.setClinicName(request.getClinicName());
+                }
+                if(doctor.getSpeciality()!= null&&doctor.getClinicName()!=null&&doctor.getDateOfBirth()!=null) {
+                    doctor.setProfileCompleted(true);
+                }
                 doctorRepository.save(doctor);
 
                 response.put("message", "Doctor profile updated successfully");
@@ -99,8 +104,12 @@ public class ProfileService {
                 Patient patient = patientRepository.findById(userId)
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Patient profile not found"));
 
-                patient.setDateOfBirth(request.getDateOfBirth());
-                patient.setProfileCompleted(true);
+                if(request.getDateOfBirth() != null) {
+                    patient.setDateOfBirth(request.getDateOfBirth());
+                }
+                if(patient.getDateOfBirth()!=null){
+                    patient.setProfileCompleted(true);
+                }
                 patientRepository.save(patient);
 
                 response.put("message", "Patient profile updated successfully");
@@ -108,7 +117,18 @@ public class ProfileService {
 
             default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid user role");
         }
+        if (request.getFullName() != null)
+            userData.setFullName(request.getFullName());
 
+        if (request.getEmail() != null)
+            userData.setEmail(request.getEmail());
+
+        if (request.getGender() != null)
+            userData.setGender(request.getGender());
+
+        if (request.getPhone() != null)
+            userData.setPhoneNumber(request.getPhone());
+        userRepository.save(userData);
         return ResponseEntity.ok(response);
     }
 
